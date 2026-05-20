@@ -72,38 +72,47 @@ new IntersectionObserver(entries => {
   });
 }, {threshold:.25}).observe(document.querySelector('.skills'));
 
-/* — Form — */
-document.getElementById('cf').addEventListener('submit', async function(e) {
-  e.preventDefault();
+
+/* ── Form ── */
+document.getElementById('cf').addEventListener('submit', function(e) {
+  e.preventDefault(); // Empêche le rechargement de la page
   
-  const form = e.target;
+  const form = this;
   const btn = form.querySelector('button[type=submit]');
-  const formData = new FormData(form);
+  const successMessage = document.getElementById('fsuccess');
   
+  // 1. On change le texte du bouton pendant l'envoi réel
   btn.textContent = '⏳ Envoi en cours...';
   btn.disabled = true;
-  
-  try {
-    const response = await fetch('https://formspree.io/f/xpqnwgrj', {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-    
+
+  // 2. On récupère toutes les données saisies dans le formulaire
+  const formData = new FormData(form);
+
+  // 3. On envoie les données à l'action du formulaire (Formspree)
+  fetch(form.action, {
+    method: form.method,
+    body: formData,
+    headers: {
+      'Accept': 'application/json'
+    }
+  })
+  .then(response => {
     if (response.ok) {
+      // SI L'ENVOI REUSSIT : On cache le bouton et on affiche ton message de succès
       btn.style.display = 'none';
-      document.getElementById('fsuccess').style.display = 'block';
-      form.reset(); // vide le formulaire après envoi
+      successMessage.style.display = 'block';
+      form.reset(); // Vide les champs du formulaire proprement
     } else {
-      alert('Erreur lors de l\'envoi. Réessaie.');
-      btn.textContent = 'Envoyer';
+      // Si Formspree renvoie une erreur (ex: mauvaise URL)
+      alert("Une erreur est survenue lors de l'envoi. Veuillez réessayer.");
+      btn.textContent = '⚡ Envoyer la demande';
       btn.disabled = false;
     }
-  } catch (error) {
-    alert('Erreur réseau. Vérifie ta connexion.');
-    btn.textContent = 'Envoyer';
+  })
+  .catch(error => {
+    // Si problème de connexion internet du visiteur
+    alert("Erreur de connexion. Impossible d'envoyer le formulaire.");
+    btn.textContent = '⚡ Envoyer la demande';
     btn.disabled = false;
-  }
+  });
 });
